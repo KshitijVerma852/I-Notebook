@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const mongoURI = "mongodb+srv://Kshitij:naveen76@i-notebook.ebbzd.mongodb.net/test"
+const mongoURI = "mongodb+srv://Kshitij:naveen76@i-notebook.ebbzd.mongodb.net/iNotebook"
 
 const connectToMongo = () => {
     mongoose.connect(mongoURI, () => {
