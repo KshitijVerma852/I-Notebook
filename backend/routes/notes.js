@@ -48,4 +48,39 @@ router.post(
 	}
 );
 
+// Route 3: update a note using: PUT "/api/notes/updateNote". Login required.
+
+router.put(
+	"/updateNote/:id",
+	fetchUser,
+	[
+		body("title", "Invalid title.").isLength({ min: 3 }),
+		body("description", "Invalid description.").isLength({ min: 5 })
+	],
+	async (req, res) => {
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			res.status(400).json({ errors: errors.array() });
+		}
+		let { title, description, tags } = req.body;
+		const newNote = {};
+		newNote.title = title ? title : {};
+		newNote.description = description ? description : {};
+		newNote.tags = tags ? tags : {};
+		let note = await Notes.findById(req.params.id);
+		if (!note) {
+			return res.status(404).json({ error: "Not found" });
+		}
+		if (note.user.toString() !== req.user.id) {
+			return res.status(401).json({ error: "Not allowed." });
+		}
+		note = await Notes.findByIdAndUpdate(
+			req.params.id,
+			{ $set: newNote },
+			{ new: true }
+		);
+		res.status(200).json({ note });
+	}
+);
+
 module.exports = router;
