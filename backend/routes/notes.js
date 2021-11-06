@@ -58,29 +58,53 @@ router.put(
 		body("description", "Invalid description.").isLength({ min: 5 })
 	],
 	async (req, res) => {
-		const errors = validationResult(req);
-		if (!errors.isEmpty()) {
-			res.status(400).json({ errors: errors.array() });
-		}
 		let { title, description, tags } = req.body;
-		const newNote = {};
-		newNote.title = title ? title : {};
-		newNote.description = description ? description : {};
-		newNote.tags = tags ? tags : {};
+		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				res.status(400).json({ errors: errors.array() });
+			}
+			const newNote = {};
+			newNote.title = title ? title : {};
+			newNote.description = description ? description : {};
+			newNote.tags = tags ? tags : {};
+			let note = await Notes.findById(req.params.id);
+			if (!note) {
+				return res.status(404).json({ error: "Not found" });
+			}
+			if (note.user.toString() !== req.user.id) {
+				return res.status(401).json({ error: "Not allowed." });
+			}
+			note = await Notes.findByIdAndUpdate(
+				req.params.id,
+				{ $set: newNote },
+				{ new: true }
+			);
+			res.status(200).json({ note });
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({ error });
+		}
+	}
+);
+
+// Route 4: Delete a note using: DELETE "/api/notes/deleteNote". Login required.
+
+router.delete("/deleteNote/:id", fetchUser, async (req, res) => {
+	try {
 		let note = await Notes.findById(req.params.id);
 		if (!note) {
-			return res.status(404).json({ error: "Not found" });
+			return res.status(404).json({ error: "Not found." });
 		}
 		if (note.user.toString() !== req.user.id) {
 			return res.status(401).json({ error: "Not allowed." });
 		}
-		note = await Notes.findByIdAndUpdate(
-			req.params.id,
-			{ $set: newNote },
-			{ new: true }
-		);
+		note = await Notes.findByIdAndDelete(req.params.id);
 		res.status(200).json({ note });
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ error });
 	}
-);
+});
 
 module.exports = router;
